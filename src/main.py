@@ -51,5 +51,5 @@ if __name__ == "__main__":
         password=args.password
     )
 
-    threading.Thread(target=socket_listener.listen).start()
+    #threading.Thread(target=socket_listener.listen).start()
     rabbit_listener.start_listening()
