@@ -12,7 +12,7 @@ class LightController:
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)  # evita "channel already in use" warnings
         # opcional: chamar GPIO.cleanup() aqui se quiser garantir estado limpo
-        # GPIO.cleanup()
+        GPIO.cleanup()
         GPIO.setup(self.pin, GPIO.OUT)
         GPIO.output(self.pin, GPIO.LOW)
         logger.info("LightController initialized on pin %s (initial OFF)", self.pin)
