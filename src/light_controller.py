@@ -48,14 +48,22 @@ class LightController:
         GPIO.setup(self.pin, GPIO.OUT)
         # iniciar em OFF
         GPIO.output(self.pin, self.off_level)
-        logger.info("LightController initialized on pin %s (initial OFF), active_low=%s, on_level=%s off_level=%s",
-                    self.pin, self.active_low, self.on_level, self.off_level)
+
+        # nova flag: se True, ao desligar colocamos o pino como INPUT (emula cleanup)
+        self.tristate_off = os.getenv("LIGHT_TRISTATE_OFF", "1").lower() in ("1", "true", "yes")
+
+        logger.info("LightController initialized on pin %s (initial OFF), active_low=%s, on_level=%s off_level=%s tristate_off=%s",
+                    self.pin, self.active_low, self.on_level, self.off_level, self.tristate_off)
 
     def turn_on(self):
-        logger.info("turn_on called: writing on_level=%s to pin %s", self.on_level, self.pin)
+        logger.info("turn_on called: ensuring pin %s is OUTPUT and writing on_level=%s", self.pin, self.on_level)
         try:
+            # se estava em INPUT devido ao tristate-off, reconfigure como OUTPUT
+            try:
+                GPIO.setup(self.pin, GPIO.OUT)
+            except Exception as e:
+                logger.debug("Could not setup pin %s as OUTPUT before turn_on: %s", self.pin, e)
             GPIO.output(self.pin, self.on_level)
-            # write again after short delay to ensure hardware latch
             time.sleep(0.02)
             GPIO.output(self.pin, self.on_level)
             logger.info("GPIO.output executed for pin %s -> %s", self.pin, self.on_level)
@@ -76,8 +84,13 @@ class LightController:
     def turn_off(self):
         logger.info("turn_off called: writing off_level=%s to pin %s", self.off_level, self.pin)
         try:
+            # assegura modo OUTPUT antes do write (caso tenha sido tri-stated antes)
+            try:
+                GPIO.setup(self.pin, GPIO.OUT)
+            except Exception:
+                pass
+
             GPIO.output(self.pin, self.off_level)
-            # small pause and second write to try to overcome hardware debounce/driver issues
             time.sleep(0.02)
             GPIO.output(self.pin, self.off_level)
             logger.info("GPIO.output executed for pin %s -> %s (double-write)", self.pin, self.off_level)
@@ -88,14 +101,18 @@ class LightController:
             except Exception as e:
                 logger.debug("GPIO.input not available/readable for pin %s: %s", self.pin, e)
 
-            # Optionally emulate cleanup/tristate behavior if hardware only changes on cleanup.
-            # Enable by setting env LIGHT_TRISTATE_OFF=1 (or "true"/"yes")
-            if os.getenv("LIGHT_TRISTATE_OFF", "").lower() in ("1", "true", "yes"):
+            if self.tristate_off:
+                # tente colocar o pino em INPUT (alta-impedância) — preferível a cleanup global
                 try:
                     GPIO.setup(self.pin, GPIO.IN)
-                    logger.info("Pin %s set to INPUT to emulate cleanup (tristate off)", self.pin)
+                    logger.info("Pin %s set to INPUT (tristate) to emulate cleanup off", self.pin)
                 except Exception as e:
-                    logger.debug("Could not set pin %s to INPUT: %s", self.pin, e)
+                    logger.warning("Could not set pin %s to INPUT, attempting GPIO.cleanup(pin): %s", self.pin, e)
+                    try:
+                        GPIO.cleanup(self.pin)
+                        logger.info("GPIO.cleanup(pin) called for %s", self.pin)
+                    except Exception as e2:
+                        logger.exception("GPIO.cleanup(pin) also failed for %s: %s", self.pin, e2)
 
         except Exception:
             logger.exception("Error writing to GPIO pin %s during turn_off", self.pin)
