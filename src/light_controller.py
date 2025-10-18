@@ -1,4 +1,9 @@
 import RPi.GPIO as GPIO
+import logging
+
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    logging.basicConfig(level=logging.INFO)
 
 class LightController:
     def __init__(self, pin=12):
@@ -10,21 +15,37 @@ class LightController:
         # GPIO.cleanup()
         GPIO.setup(self.pin, GPIO.OUT)
         GPIO.output(self.pin, GPIO.LOW)
+        logger.info("LightController initialized on pin %s (initial OFF)", self.pin)
 
     def turn_on(self):
+        # sempre escrever no pino para garantir estado correto
+        GPIO.output(self.pin, GPIO.HIGH)
+        logger.info("turn_on called: setting pin %s HIGH", self.pin)
         if not self.light_state:
-            self.light_state = True
-            GPIO.output(self.pin, GPIO.HIGH)
-            print("Light turned ON")
+            logger.info("Light state changed: OFF -> ON")
+        else:
+            logger.info("Light was already ON (pin re-set)")
+        self.light_state = True
 
     def turn_off(self):
-        if self.light_state:
-            self.light_state = False
+        # adicionar log detalhado para diagnosticar mensagens que não desligam
+        logger.info("turn_off called: setting pin %s LOW", self.pin)
+        try:
             GPIO.output(self.pin, GPIO.LOW)
-            print("Light turned OFF")
+            logger.info("GPIO.output executed for pin %s", self.pin)
+        except Exception as e:
+            logger.exception("Error writing to GPIO pin %s: %s", self.pin, e)
+
+        if self.light_state:
+            logger.info("Light state changed: ON -> OFF")
+        else:
+            logger.info("Light was already OFF (pin re-set)")
+
+        self.light_state = False
 
     def get_light_state(self):
         return self.light_state
 
     def cleanup(self):
+        logger.info("Cleaning up GPIO")
         GPIO.cleanup()
