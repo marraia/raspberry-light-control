@@ -28,11 +28,16 @@ class LightController:
         self.light_state = True
 
     def turn_off(self):
-        # adicionar log detalhado para diagnosticar mensagens que não desligam
         logger.info("turn_off called: setting pin %s LOW", self.pin)
         try:
             GPIO.output(self.pin, GPIO.LOW)
-            logger.info("GPIO.output executed for pin %s", self.pin)
+            logger.info("GPIO.output executed: pin %s -> LOW", self.pin)
+            try:
+                # lê o nível do pino para confirmar
+                level = GPIO.input(self.pin)
+                logger.info("GPIO.input for pin %s returned: %s", self.pin, level)
+            except Exception as e:
+                logger.warning("Could not read GPIO.input for pin %s: %s", self.pin, e)
         except Exception as e:
             logger.exception("Error writing to GPIO pin %s: %s", self.pin, e)
 
