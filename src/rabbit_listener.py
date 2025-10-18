@@ -6,10 +6,10 @@ from light_controller import LightController
 class RabbitListener:
     def __init__(self, queue_name=None, host=None, port=None, username=None, password=None):
         self.queue_name = queue_name or os.getenv('RABBIT_QUEUE', 'light_queue')
-        self.host = host or os.getenv('RABBIT_HOST', 'localhost')
+        self.host = host or os.getenv('RABBIT_HOST', 'toucan.lmq.cloudamqp.com')
         self.port = int(port or os.getenv('RABBIT_PORT', '5672'))
-        self.username = username or os.getenv('RABBIT_USER')
-        self.password = password or os.getenv('RABBIT_PASS')
+        self.username = username or os.getenv('RABBIT_USER', 'blmfmpod')
+        self.password = password or os.getenv('RABBIT_PASS', 'iLIyEexy85xzkbX8KATYHwPEsvwz-OP4')
 
         self.light_controller = LightController()
         self.connection = None
