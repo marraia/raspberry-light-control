@@ -5,6 +5,9 @@ class LightController:
         self.pin = pin
         self.light_state = False  # False means off, True means on
         GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)  # evita "channel already in use" warnings
+        # opcional: chamar GPIO.cleanup() aqui se quiser garantir estado limpo
+        # GPIO.cleanup()
         GPIO.setup(self.pin, GPIO.OUT)
         GPIO.output(self.pin, GPIO.LOW)
 
