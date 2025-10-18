@@ -1,7 +1,7 @@
 import RPi.GPIO as GPIO
 
 class LightController:
-    def __init__(self, pin=17):
+    def __init__(self, pin=12):
         self.pin = pin
         self.light_state = False  # False means off, True means on
         GPIO.setmode(GPIO.BCM)
