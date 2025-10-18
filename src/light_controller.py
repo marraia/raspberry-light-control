@@ -14,12 +14,12 @@ class LightController:
         # opcional: chamar GPIO.cleanup() aqui se quiser garantir estado limpo
         GPIO.cleanup()
         GPIO.setup(self.pin, GPIO.OUT)
-        GPIO.output(self.pin, GPIO.LOW)
+        GPIO.output(self.pin, GPIO.HIGH)
         logger.info("LightController initialized on pin %s (initial OFF)", self.pin)
 
     def turn_on(self):
         # sempre escrever no pino para garantir estado correto
-        GPIO.output(self.pin, GPIO.HIGH)
+        GPIO.output(self.pin, GPIO.LOW)
         logger.info("turn_on called: setting pin %s HIGH", self.pin)
         if not self.light_state:
             logger.info("Light state changed: OFF -> ON")
@@ -30,7 +30,7 @@ class LightController:
     def turn_off(self):
         logger.info("turn_off called: setting pin %s LOW", self.pin)
         try:
-            GPIO.output(self.pin, GPIO.LOW)
+            GPIO.output(self.pin, GPIO.HIGH)
             logger.info("GPIO.output executed: pin %s -> LOW", self.pin)
             try:
                 # lê o nível do pino para confirmar
