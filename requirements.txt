@@ -1,3 +1,6 @@
 Flask==2.0.1
 pika==1.2.0
-RPi.GPIO==0.7.1
+# RPi.GPIO removido intencionalmente: instale via apt no Raspberry Pi:
+# sudo apt install python3-rpi.gpio
+# Se você usar um virtualenv no Pi, instale o pacote apt acima e depois execute:
+# pip install -r requirements.txt
