@@ -19,7 +19,19 @@ class RabbitListener:
         self.password = password or os.getenv('RABBIT_PASS')
         self.vhost = vhost or os.getenv('RABBIT_VHOST', '/')
 
-        self.light_controller = LightController()
+        # read LIGHT_ACTIVE_LOW env and normalize to bool (explicit True/False/None)
+        env_val = os.getenv("LIGHT_ACTIVE_LOW", "").lower()
+        if env_val in ("1", "true", "yes"):
+            active_low_flag = True
+        elif env_val in ("0", "false", "no"):
+            active_low_flag = False
+        else:
+            active_low_flag = None
+
+        # pass active_low to LightController so listener uses same logic as your manual test
+        self.light_controller = LightController(active_low=active_low_flag)
+        logger.info("RabbitListener initialized -> queue=%s url=%s light_pin=%s active_low=%s",
+                    self.queue_name, self.url, getattr(self.light_controller, "pin", None), active_low_flag)
         self.connection = None
         self.channel = None
 
