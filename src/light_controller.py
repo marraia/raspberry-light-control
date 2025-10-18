@@ -1,4 +1,5 @@
 import os
+import time
 import logging
 
 logger = logging.getLogger(__name__)
@@ -10,7 +11,7 @@ try:
 except Exception:
     # mock para desenvolvimento
     class _MockGPIO:
-        BCM = 'BCM'; OUT = 'OUT'; LOW = 0; HIGH = 1
+        BCM = 'BCM'; OUT = 'OUT'; IN = 'IN'; LOW = 0; HIGH = 1
         def setmode(self, m): logger.info("[MockGPIO] setmode %s", m)
         def setwarnings(self, v): pass
         def setup(self, pin, mode): logger.info("[MockGPIO] setup pin=%s mode=%s", pin, mode)
@@ -54,6 +55,9 @@ class LightController:
         logger.info("turn_on called: writing on_level=%s to pin %s", self.on_level, self.pin)
         try:
             GPIO.output(self.pin, self.on_level)
+            # write again after short delay to ensure hardware latch
+            time.sleep(0.02)
+            GPIO.output(self.pin, self.on_level)
             logger.info("GPIO.output executed for pin %s -> %s", self.pin, self.on_level)
             try:
                 level = GPIO.input(self.pin)
@@ -73,12 +77,26 @@ class LightController:
         logger.info("turn_off called: writing off_level=%s to pin %s", self.off_level, self.pin)
         try:
             GPIO.output(self.pin, self.off_level)
-            logger.info("GPIO.output executed for pin %s -> %s", self.pin, self.off_level)
+            # small pause and second write to try to overcome hardware debounce/driver issues
+            time.sleep(0.02)
+            GPIO.output(self.pin, self.off_level)
+            logger.info("GPIO.output executed for pin %s -> %s (double-write)", self.pin, self.off_level)
+
             try:
                 level = GPIO.input(self.pin)
                 logger.info("GPIO.input for pin %s returned: %s", self.pin, level)
             except Exception as e:
                 logger.debug("GPIO.input not available/readable for pin %s: %s", self.pin, e)
+
+            # Optionally emulate cleanup/tristate behavior if hardware only changes on cleanup.
+            # Enable by setting env LIGHT_TRISTATE_OFF=1 (or "true"/"yes")
+            if os.getenv("LIGHT_TRISTATE_OFF", "").lower() in ("1", "true", "yes"):
+                try:
+                    GPIO.setup(self.pin, GPIO.IN)
+                    logger.info("Pin %s set to INPUT to emulate cleanup (tristate off)", self.pin)
+                except Exception as e:
+                    logger.debug("Could not set pin %s to INPUT: %s", self.pin, e)
+
         except Exception:
             logger.exception("Error writing to GPIO pin %s during turn_off", self.pin)
 
