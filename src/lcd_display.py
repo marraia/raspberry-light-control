@@ -1,4 +1,7 @@
-from smbus import SMBus
+try:
+    from smbus import SMBus
+except ImportError:
+    from smbus2 import SMBus
 from time import sleep
 
 class LCD:
