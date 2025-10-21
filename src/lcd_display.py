@@ -33,7 +33,7 @@ class LCD:
     def __init__(self, address=0x27, port=1):
         """Inicializa o LCD no endereço I2C especificado."""
         self.address = address
-        self.bus = smbus.SMBus(port)
+        self.bus = smbus2.SMBus(port)
         self._init_lcd()
 
     def _write_cmd(self, cmd):
