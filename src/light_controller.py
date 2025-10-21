@@ -144,5 +144,11 @@ class LightController:
         logger.info("Cleaning up GPIO")
         try:
             GPIO.cleanup()
+            display = LCD(address=0x27)  # troque o endereço se necessário (veja com i2cdetect)
+            display.backlight(True)
+            display.clear()
+            
+            display.write("Nada rodando", line=1)
+            display.write("================", line=2)
         except Exception:
             logger.exception("Error during GPIO.cleanup()")
