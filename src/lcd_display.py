@@ -1,4 +1,4 @@
-import smbus
+from smbus import SMBus
 from time import sleep
 
 class LCD:
