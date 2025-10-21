@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+from lcd_display import LCD
 
 logger = logging.getLogger(__name__)
 if not logger.handlers:
@@ -57,6 +58,13 @@ class LightController:
 
     def turn_on(self):
         logger.info("turn_on called: ensuring pin %s is OUTPUT and writing on_level=%s", self.pin, self.on_level)
+        display = LCD(address=0x27)  # troque o endereço se necessário (veja com i2cdetect)
+        display.backlight(True)
+        display.clear()
+        
+        display.write("Pisca Pisca", line=1)
+        display.write("LIGADO!", line=2)
+
         try:
             # se estava em INPUT devido ao tristate-off, reconfigure como OUTPUT
             try:
@@ -83,6 +91,12 @@ class LightController:
 
     def turn_off(self):
         logger.info("turn_off called: writing off_level=%s to pin %s", self.off_level, self.pin)
+        display = LCD(address=0x27)  # troque o endereço se necessário (veja com i2cdetect)
+        display.backlight(True)
+        display.clear()
+        
+        display.write("Pisca Pisca", line=1)
+        display.write("DESLIGADO!", line=2)
         try:
             # assegura modo OUTPUT antes do write (caso tenha sido tri-stated antes)
             try:
